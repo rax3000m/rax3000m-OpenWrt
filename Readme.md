@@ -117,6 +117,13 @@ dd if=$(blkid -t PARTLABEL=factory -o device) of=/tmp/mmcblk0px_factory.bin conv
 RAX3000M算力版（RAX3000M-eMMC）的eMMC默认使用26MHz频率  
 RAX3000Z增强版（XR30-eMMC）的eMMC默认使用52MHz频率  
 
+默认使用 26 MHz 闪存频率，52 MHz 下闪存读写速率相较 26 MHz 下翻倍，可达到 40MB/s 以上，**但部分机器因闪存体质差异，使用 52 MHz 闪存频率固件可能会出现 I/O 报错 (`dmesg | grep error` 查看)，无法正常使用，甚至可能无法启动**，你可以在 [Releases](https://github.com/AngelaCooljx/Actions-rax3000m-emmc/releases) 处查找不同闪存频率固件。自行构建 52 MHz 版本需要在 Run workflow 时勾选 “Use 52MHz max-frequency”，或在 workflow 配置文件中将 `USE_52MHZ` 中 `default: false` 的 false 改为 true，重新编译刷入使用
+
+该选项默认关闭，即按源码DTS中eMMC频率26MHz编译，需要设置为52MHz请打钩。
+RAX3000M算力版原厂机子选用的eMMC颗粒品质不太行，不能运行在MT7981B eMMC最高的52MHz频率，所以原厂固件使用的是26MHz频率。
+除非更换过eMMC，不然不建议使用52MHz，基本跑一段时间都会出问题，老实使用26MHz即可。
+RAX3000Z增强版原厂固件使用的是52MHz频率，没有机子无法测试eMMC是否有问题，云适配。
+
 - #### 1. Set LAN IP Address
 设置LAN IP地址（路由器登录地址），默认192.168.1.1。  
 
