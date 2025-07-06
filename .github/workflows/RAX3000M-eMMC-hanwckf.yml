@@ -283,7 +283,7 @@ jobs:
         mapfile -t devices < <(grep '^CONFIG_TARGET_DEVICE.*=y' openwrt/.config | sed -r 's/.*DEVICE_(.*)=y/\1/')
         cd openwrt/bin/targets/*/*
         rm -rf packages
-        sudo -E apt-get -qq install rename
+        sudo apt-get update -qq && sudo apt-get install -y rename || sudo apt-get install -y prename
         for val in "${devices[@]}"; do
           rename "s/.*${val}/${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${val}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}/" *
           echo "$val"
