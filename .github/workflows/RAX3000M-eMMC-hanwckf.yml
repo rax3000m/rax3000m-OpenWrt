@@ -16,11 +16,11 @@ on:
   workflow_dispatch:
     inputs:
       LAN_IP:
-        description: 'Set LAN IP Address'
+        description: '设置 LAN IP 地址'
         required: true
         default: '192.168.6.1'
       WIFI_DRIVER:
-        description: 'Choose WiFi Driver'
+        description: '选择 WiFi 驱动版本'
         required: true
         default: 'v7.6.7.2-fw-20240823(recommend)'
         type: choice
@@ -40,26 +40,26 @@ on:
         - v7.6.6.1-fw-20231024
         - v7.6.6.1-fw-20240823
       EEPROM:
-        description: 'Use nx30pro eeprom and fixed WiFi MAC address'
+        description: '使用 nx30pro 的 EEPROM 并固定 WiFi MAC 地址'
         required: true
         default: true
         type: boolean
       APP_MTK:
-        description: 'Use luci-app-mtk wifi config'
+        description: '使用 luci-app-mtk 进行无线配置'
         required: true
         default: false
         type: boolean
       NO_DOCKERMAN:
-        description: 'Not build luci-app-dockerman'
+        description: '不编译 luci-app-dockerman'
         required: true
         default: false
         type: boolean
       ssh:
-        description: 'SSH connection to Actions'
+        description: '是否启用 SSH 连接'
         required: false
         default: 'false'
       USE_52MHZ:
-        description: 'Use 52MHz max-frequency'
+        description: '启用 52MHz 高频率'
         required: true
         default: false
         type: boolean
@@ -81,7 +81,7 @@ env:
   CONFIG_FILE: RAX3000M-eMMC_XR30-eMMC-hanwckf/.mtwifi-cfg.config
   DIY_P1_SH: RAX3000M-eMMC_XR30-eMMC-hanwckf/diy-part1.sh
   DIY_P2_SH: RAX3000M-eMMC_XR30-eMMC-hanwckf/diy-part2.sh
-  SSH_ACTIONS: false
+  #SSH_ACTIONS: false
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
@@ -93,11 +93,60 @@ jobs:
     permissions:
       contents: write
 
+    # Job 级别的环境变量：这些变量会根据触发事件动态设置
+    env:
+      # LAN_IP: 如果是 workflow_dispatch 触发，则使用输入的 LAN_IP，否则使用默认值 '192.168.6.1'
+      LAN_IP: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.LAN_IP || '192.168.6.1' }}
+      
+      # WIFI_DRIVER: 如果是 workflow_dispatch 触发，则使用输入的 WIFI_DRIVER，否则使用默认值
+      WIFI_DRIVER: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.WIFI_DRIVER || 'v7.6.7.2-fw-20240823(recommend)' }}
+      
+      # EEPROM: 如果是 workflow_dispatch 触发，则使用输入的 EEPROM，否则使用默认值 true (布尔值)
+      EEPROM: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.EEPROM || true }}
+
+      # APP_MTK: 如果是 workflow_dispatch 触发，则使用输入的 APP_MTK，否则使用默认值 false (布尔值)
+      APP_MTK: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.APP_MTK || false }}
+
+      # NO_DOCKERMAN: 如果是 workflow_dispatch 触发，则使用输入的 NO_DOCKERMAN，否则使用默认值 false (布尔值)
+      NO_DOCKERMAN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.NO_DOCKERMAN || false }}
+      
+      # SSH_ACTIONS: 将 workflow_dispatch 的 'ssh' 输入（字符串）转换为布尔值。
+      # 如果是 workflow_dispatch 触发且输入 'ssh' 是 'true'，则为 true；否则为 false。
+      SSH_ACTIONS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ssh == 'true' || false }}
+
+      # USE_52MHZ: 如果是 workflow_dispatch 触发，则使用输入的 USE_52MHZ，否则使用默认值 false (布尔值)
+      USE_52MHZ: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.USE_52MHZ || false }}
+
     steps:
+    - name: 打印所有环境变量
+      run: |
+        echo "--- 全局环境变量 ---"
+        echo "OPENWRT_NAME: $OPENWRT_NAME"
+        echo "UPLOAD_TAG_NAME: $UPLOAD_TAG_NAME"
+        echo "REPO_URL: $REPO_URL"
+        echo "REPO_BRANCH: $REPO_BRANCH"
+        echo "FEEDS_CONF: $FEEDS_CONF"
+        echo "RAX3000M_EMMC_DTS_FILE: $RAX3000M_EMMC_DTS_FILE"
+        echo "CONFIG_FILE: $CONFIG_FILE"
+        echo "DIY_P1_SH: $DIY_P1_SH"
+        echo "DIY_P2_SH: $DIY_P2_SH"
+        echo "UPLOAD_FIRMWARE: $UPLOAD_FIRMWARE"
+        echo "UPLOAD_RELEASE: $UPLOAD_RELEASE"
+        echo "TZ: $TZ"
+        echo "--- Job 动态环境变量 ---"
+        echo "LAN_IP: $LAN_IP"
+        echo "WIFI_DRIVER: $WIFI_DRIVER"
+        echo "EEPROM: $EEPROM"
+        echo "APP_MTK: $APP_MTK"
+        echo "NO_DOCKERMAN: $NO_DOCKERMAN"
+        echo "SSH_ACTIONS: $SSH_ACTIONS"
+        echo "USE_52MHZ: $USE_52MHZ"
+        
     - name: 检查项目分支
       uses: actions/checkout@main
 
     - name: 缓存编译依赖
+      id: cache
       uses: actions/cache@v4
       with:
         path: |
@@ -108,7 +157,16 @@ jobs:
         key: ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-${{ github.sha }}-${{ hashFiles('RAX3000M-eMMC_XR30-eMMC-hanwckf/feeds.conf.default') }}
         restore-keys: |
           ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-
-           
+ 
+    - name: 📣 Log Cache Status
+      run: |
+        if [ "${{ steps.cache.outputs.cache-hit }}" == 'true' ]; then
+          echo "✅ Cache HIT: 使用缓存成功"
+        else
+          echo "❌ Cache MISS: 首次编译或配置已变更，未命中缓存"
+        fi
+        echo "CACHE_HIT=${{ steps.cache.outputs.cache-hit }}" >> $GITHUB_ENV
+                 
     - name: 初始化编译环境
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -184,7 +242,7 @@ jobs:
     - name: 设置LAN IP地址（路由器登录地址）
       run: |
         cd openwrt
-        SET_IP=${{ github.event.inputs.LAN_IP }}
+        SET_IP="${{ env.LAN_IP }}" # 或者更简洁地写成 SET_IP="$LAN_IP"
         if [[ $SET_IP =~ ^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$ ]]; then
             #修改immortalwrt.lan关联IP
             sed -i "s/192\.168\.[0-9]*\.[0-9]*/$SET_IP/g" $(find feeds/luci/modules/luci-mod-system -type f -name "flash.js")
@@ -192,29 +250,29 @@ jobs:
             sed -i "s/192\.168\.[0-9]*\.[0-9]*/$SET_IP/g" package/base-files/files/bin/config_generate
             echo "Set LAN IP Address: $SET_IP"
         else
-            echo "Invalid IP address, use default."
+            echo "错误：LAN IP 地址 ($SET_IP) 无效。将使用默认配置。"
         fi
 
     - name: 设置WiFi驱动版本
       run: |
         cd openwrt
-        wifi_driver=$(echo "${{ github.event.inputs.WIFI_DRIVER }}" | sed -E 's/^(v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-        firmware=$(echo "${{ github.event.inputs.WIFI_DRIVER }}" | sed -E 's/.*fw-([0-9]{8}|default).*/\1/g')
+        wifi_driver=$(echo "${{ env.WIFI_DRIVER }}" | sed -E 's/^(v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+        firmware=$(echo "${{ env.WIFI_DRIVER }}" | sed -E 's/.*fw-([0-9]{8}|default).*/\1/g')
         if [ "$wifi_driver" == "v7.6.6.1" ]; then
                 sed -i 's/CONFIG_MTK_MT_WIFI_DRIVER_VERSION_7672=y/CONFIG_MTK_MT_WIFI_DRIVER_VERSION_7661=y/g' .config
         fi
         if [ "$firmware" == "default" ]; then
                 sed -i 's/CONFIG_MTK_MT_WIFI_MT7981_20240823=y/CONFIG_MTK_MT_WIFI_MT7981_DEFAULT_FIRMWARE=y/g' .config
         else
-        	sed -i 's/CONFIG_MTK_MT_WIFI_MT7981_20240823=y/CONFIG_MTK_MT_WIFI_MT7981_${firmware}=y/g' .config
+        	sed -i "s/CONFIG_MTK_MT_WIFI_MT7981_20240823=y/CONFIG_MTK_MT_WIFI_MT7981_${firmware}=y/g" .config
         fi
         echo "Use WiFi Driver: $wifi_driver-fw-$firmware"
 
     - name: 使用nx30pro的高功率eeprom并固定WiFi MAC地址
-      if: github.event.inputs.EEPROM == 'true'
+      if: env.EEPROM == 'true'
       run: |
         cd openwrt
-        wifi_driver=$(echo "${{ github.event.inputs.WIFI_DRIVER }}" | sed -E 's/^(v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+        wifi_driver=$(echo "${{ env.WIFI_DRIVER }}" | sed -E 's/^(v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
         if [ "$wifi_driver" == "v7.6.6.1" ]; then
                 cp $GITHUB_WORKSPACE/RAX3000M-eMMC_XR30-eMMC-hanwckf/mt79xx_20220907-8b55f5_eeprom.tar.xz dl/mt79xx_20220907-8b55f5.tar.xz
         else
@@ -230,7 +288,7 @@ jobs:
         }}' target/linux/mediatek/mt7981/base-files/etc/board.d/02_network
 
     - name: 使用luci-app-mtk无线配置
-      if: github.event.inputs.APP_MTK == 'true'
+      if: env.APP_MTK == 'true'
       run: |
         cd openwrt
         sed -i 's/CONFIG_PACKAGE_luci-app-mtwifi-cfg=y/CONFIG_PACKAGE_luci-app-mtk=y/g' .config
@@ -239,14 +297,14 @@ jobs:
         sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
 
     - name: 取消编译dockerman
-      if: github.event.inputs.NO_DOCKERMAN == 'true'
+      if: env.NO_DOCKERMAN == 'true'
       run: |
         cd openwrt
         sed -i '/CONFIG_PACKAGE_luci-app-dockerman=y/d' .config
 
     - name: SSH链接管理
       uses: P3TERX/ssh2actions@v1.0.0
-      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      if: env.SSH_ACTIONS == 'true'
       env:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -260,6 +318,10 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
+        
+    - name: 🕒 Start Time
+      run: echo "BUILD_START=$(date +%s)" >> $GITHUB_ENV
+       
     - name: 编译固件
       id: compile
       run: |
@@ -276,12 +338,12 @@ jobs:
         else
                 echo "WIFI_VERSION=-v7672" >> $GITHUB_ENV
         fi
-        if [ ${{ github.event.inputs.EEPROM }} == 'true' ]; then
+        if [ "$EEPROM" == "true" ]; then
                 echo "EEPROM=-eeprom" >> $GITHUB_ENV
         else
                 echo "EEPROM=" >> $GITHUB_ENV
         fi
-        if [ ${{ github.event.inputs.USE_52MHZ }} == 'true' ]; then
+        if [ "$USE_52MHZ" == "true" ]; then
                 echo "USE52MHZ=-use52mhz" >> $GITHUB_ENV
         else
                 echo "USE52MHZ=" >> $GITHUB_ENV
@@ -320,6 +382,29 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
+    - name: 📝 Generate Build Summary
+      if: steps.compile.outputs.status == 'success'
+      run: |
+        mkdir -p summary
+        BUILD_END=$(date +%s)
+        DURATION=$((BUILD_END - BUILD_START))
+        MINUTES=$((DURATION / 60))
+        SECONDS=$((DURATION % 60))
+        echo "🧱 OpenWrt 构建摘要" > summary/build-summary.md
+        echo "---------------------" >> summary/build-summary.md
+        echo "📅 构建时间: $(date '+%Y-%m-%d %H:%M:%S')" >> summary/build-summary.md
+        echo "🕒 构建总耗时: ${MINUTES} 分 ${SECONDS} 秒" >> summary/build-summary.md
+        echo "💾 缓存: $([ "$CACHE_HIT" = true ] && echo '✅ 命中' || echo '❌ 未命中')" >> summary/build-summary.md
+        echo "📁 固件输出目录: $FIRMWARE" >> summary/build-summary.md
+        echo "🌐 设备 IP 默认地址: $IP_ADDR" >> summary/build-summary.md
+
+    - name: ☁️ Upload Build Summary
+      if: steps.compile.outputs.status == 'success'
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-summary
+        path: summary/build-summary.md
+               
     - name: 打包上传固件到Actions Artifacts
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
@@ -334,24 +419,24 @@ jobs:
         touch release.txt
         echo "- 使用源码：${{ env.REPO_URL }}" >> release.txt
         echo "- 使用分支：${{ env.REPO_BRANCH }}" >> release.txt
-        echo "- 登录地址：${{ env.IP_ADDR }}" >> release.txt
-        echo "- 使用WiFi驱动${{ github.event.inputs.WIFI_DRIVER }}" >> release.txt
-        if [[ "${{ env.EEPROM }}" == '-eeprom' ]]; then
-               echo "- 使用nx30pro高功率eeprom并固定WiFi MAC地址" >> release.txt
+        echo "- 登录地址：$IP_ADDR" >> release.txt
+        echo "- 使用WiFi驱动${{ env.WIFI_DRIVER }}" >> release.txt
+        if [[ "$EEPROM" == '-eeprom' ]]; then
+                echo "- 使用nx30pro高功率eeprom并固定WiFi MAC地址" >> release.txt
         else
                echo "- 未使用nx30pro高功率eeprom未固定WiFi MAC地址" >> release.txt
         fi
-        if [[ "${{ env.USE52MHZ }}" == '-use52mhz' ]]; then
-               echo "- 使用52MHZ" >> release.txt
+        if [[ "$USE52MHZ" == '-use52mhz' ]]; then
+                echo "- 使用52MHZ" >> release.txt
         else
                echo "- 未使用52MHZ,默认26MHZ" >> release.txt
         fi
-        if [[ "${{ env.WIFI_INTERFACE }}" == '-mtwifi' ]]; then
+        if [[ "$WIFI_INTERFACE" == '-mtwifi' ]]; then
                 echo "- 使用hanwckf mtwifi-cfg原生luci无线配置工具" >> release.txt
         else
                 echo "- 使用mtk-sdk luci-app-mtk无线配置工具" >> release.txt
         fi
-        if [[ "${{ env.BUILD_DOCKERMAN }}" == '-docker' ]]; then
+        if [[ "$BUILD_DOCKERMAN" == '-docker' ]]; then
                 echo "- 已编译luci-app-dockerman" >> release.txt
         else
                 echo "- 未编译luci-app-dockerman" >> release.txt
@@ -365,7 +450,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        files: ${{ env.FIRMWARE }}/*
+        files: |
+          ${{ env.FIRMWARE }}/*
+          release.txt
+          summary/build-summary.md
         name: ${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.UPLOAD_TAG_NAME }}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
