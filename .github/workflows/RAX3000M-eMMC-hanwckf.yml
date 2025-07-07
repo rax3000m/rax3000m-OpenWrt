@@ -11,6 +11,7 @@
 name: RAX3000M-eMMC_XR30-eMMC-hanwckf
 
 on:
+  push:
   repository_dispatch:
   workflow_dispatch:
     inputs:
@@ -114,7 +115,7 @@ jobs:
       run: |
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq update
-        sudo apt-get install -y build-essential clang flex g++ gawk \
+        # sudo apt-get install -y build-essential clang flex g++ gawk \
           gcc-multilib gettext git libncurses-dev libssl-dev python3-distutils \
           rsync unzip zlib1g-dev file wget ccache libelf-dev xsltproc
         sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-2004)
