@@ -8,7 +8,7 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 ###############手动修改##############
-name: RAX3000M-eMMC_XR30-eMMC-hanwckf
+name: RAX3000M-eMMC-hanwckf
 
 on:
   push:
@@ -22,30 +22,30 @@ on:
       WIFI_DRIVER:
         description: '选择 WiFi 驱动版本'
         required: true
-        default: 'v7.6.7.2-fw-20240823(recommend)'
+        default: 'v7.6.7.2-fw-20240823(推荐)'
         type: choice
         options:
-        - v7.6.7.2-fw-20240823(recommend)
-        - v7.6.6.1-fw-20230306(recommend)
-        - v7.6.7.2-fw-default
-        - v7.6.7.2-fw-20230306
-        - v7.6.7.2-fw-20230330
-        - v7.6.7.2-fw-20230411
-        - v7.6.7.2-fw-20230717
-        - v7.6.7.2-fw-20231024
-        - v7.6.6.1-fw-default
-        - v7.6.6.1-fw-20230330
-        - v7.6.6.1-fw-20230411
-        - v7.6.6.1-fw-20230717
-        - v7.6.6.1-fw-20231024
-        - v7.6.6.1-fw-20240823
+          - v7.6.7.2-fw-20240823(推荐)
+          - v7.6.6.1-fw-20230306(推荐)
+          - v7.6.7.2-fw-default
+          - v7.6.7.2-fw-20230306
+          - v7.6.7.2-fw-20230330
+          - v7.6.7.2-fw-20230411
+          - v7.6.7.2-fw-20230717
+          - v7.6.7.2-fw-20231024
+          - v7.6.6.1-fw-default
+          - v7.6.6.1-fw-20230330
+          - v7.6.6.1-fw-20230411
+          - v7.6.6.1-fw-20230717
+          - v7.6.6.1-fw-20231024
+          - v7.6.6.1-fw-20240823
       EEPROM:
         description: '使用 nx30pro 的 EEPROM 并固定 WiFi MAC 地址'
         required: true
         default: true
         type: boolean
       APP_MTK:
-        description: '使用 luci-app-mtk 进行无线配置'
+        description: '使用 luci-app-mtk WiFi 配置'
         required: true
         default: false
         type: boolean
@@ -66,7 +66,7 @@ on:
   schedule:
     #北京时间 (UTC+8) 每周一的 00:00（午夜）
     - cron: '0 16 * * 0'
-    
+
     - cron: '0 3 * * *'
 
 env:
@@ -88,7 +88,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     permissions:
       contents: write
@@ -97,10 +97,10 @@ jobs:
     env:
       # LAN_IP: 如果是 workflow_dispatch 触发，则使用输入的 LAN_IP，否则使用默认值 '192.168.6.1'
       LAN_IP: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.LAN_IP || '192.168.6.1' }}
-      
+
       # WIFI_DRIVER: 如果是 workflow_dispatch 触发，则使用输入的 WIFI_DRIVER，否则使用默认值
       WIFI_DRIVER: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.WIFI_DRIVER || 'v7.6.7.2-fw-20240823(recommend)' }}
-      
+
       # EEPROM: 如果是 workflow_dispatch 触发，则使用输入的 EEPROM，否则使用默认值 true (布尔值)
       EEPROM: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.EEPROM || true }}
 
@@ -109,7 +109,7 @@ jobs:
 
       # NO_DOCKERMAN: 如果是 workflow_dispatch 触发，则使用输入的 NO_DOCKERMAN，否则使用默认值 false (布尔值)
       NO_DOCKERMAN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.NO_DOCKERMAN || false }}
-      
+
       # SSH_ACTIONS: 将 workflow_dispatch 的 'ssh' 输入（字符串）转换为布尔值。
       # 如果是 workflow_dispatch 触发且输入 'ssh' 是 'true'，则为 true；否则为 false。
       SSH_ACTIONS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ssh == 'true' || false }}
@@ -118,342 +118,349 @@ jobs:
       USE_52MHZ: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.USE_52MHZ || false }}
 
     steps:
-    - name: 打印所有环境变量
-      run: |
-        echo "--- 全局环境变量 ---"
-        echo "OPENWRT_NAME: $OPENWRT_NAME"
-        echo "UPLOAD_TAG_NAME: $UPLOAD_TAG_NAME"
-        echo "REPO_URL: $REPO_URL"
-        echo "REPO_BRANCH: $REPO_BRANCH"
-        echo "FEEDS_CONF: $FEEDS_CONF"
-        echo "RAX3000M_EMMC_DTS_FILE: $RAX3000M_EMMC_DTS_FILE"
-        echo "CONFIG_FILE: $CONFIG_FILE"
-        echo "DIY_P1_SH: $DIY_P1_SH"
-        echo "DIY_P2_SH: $DIY_P2_SH"
-        echo "UPLOAD_FIRMWARE: $UPLOAD_FIRMWARE"
-        echo "UPLOAD_RELEASE: $UPLOAD_RELEASE"
-        echo "TZ: $TZ"
-        echo "--- Job 动态环境变量 ---"
-        echo "LAN_IP: $LAN_IP"
-        echo "WIFI_DRIVER: $WIFI_DRIVER"
-        echo "EEPROM: $EEPROM"
-        echo "APP_MTK: $APP_MTK"
-        echo "NO_DOCKERMAN: $NO_DOCKERMAN"
-        echo "SSH_ACTIONS: $SSH_ACTIONS"
-        echo "USE_52MHZ: $USE_52MHZ"
-        
-    - name: 检查项目分支
-      uses: actions/checkout@main
+      - name: 打印所有环境变量
+        run: |
+          echo "--- 全局环境变量 ---"
+          echo "OPENWRT_NAME: $OPENWRT_NAME"
+          echo "UPLOAD_TAG_NAME: $UPLOAD_TAG_NAME"
+          echo "REPO_URL: $REPO_URL"
+          echo "REPO_BRANCH: $REPO_BRANCH"
+          echo "FEEDS_CONF: $FEEDS_CONF"
+          echo "RAX3000M_EMMC_DTS_FILE: $RAX3000M_EMMC_DTS_FILE"
+          echo "CONFIG_FILE: $CONFIG_FILE"
+          echo "DIY_P1_SH: $DIY_P1_SH"
+          echo "DIY_P2_SH: $DIY_P2_SH"
+          echo "UPLOAD_FIRMWARE: $UPLOAD_FIRMWARE"
+          echo "UPLOAD_RELEASE: $UPLOAD_RELEASE"
+          echo "TZ: $TZ"
+          echo "--- Job 动态环境变量 ---"
+          echo "LAN_IP: $LAN_IP"
+          echo "WIFI_DRIVER: $WIFI_DRIVER"
+          echo "EEPROM: $EEPROM"
+          echo "APP_MTK: $APP_MTK"
+          echo "NO_DOCKERMAN: $NO_DOCKERMAN"
+          echo "SSH_ACTIONS: $SSH_ACTIONS"
+          echo "USE_52MHZ: $USE_52MHZ"
 
-    - name: 缓存编译依赖
-      id: cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          /var/cache/apt/archives
-          /workdir/openwrt
-          /workdir/openwrt/dl
-          /workdir/.ccache
-        key: ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-${{ github.sha }}-${{ hashFiles('RAX3000M-eMMC_XR30-eMMC-hanwckf/feeds.conf.default') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-
- 
-    - name: 📣 Log Cache Status
-      run: |
-        if [ "${{ steps.cache.outputs.cache-hit }}" == 'true' ]; then
-          echo "✅ Cache HIT: 使用缓存成功"
-        else
-          echo "❌ Cache MISS: 首次编译或配置已变更，未命中缓存"
-        fi
-        echo "CACHE_HIT=${{ steps.cache.outputs.cache-hit }}" >> $GITHUB_ENV
-                 
-    - name: 初始化编译环境
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
-        sudo -E apt-get -qq update
-        # sudo apt-get install -y build-essential clang flex g++ gawk \ 
-        #  gcc-multilib gettext git libncurses-dev libssl-dev python3-distutils \
-        #  rsync unzip zlib1g-dev file wget ccache libelf-dev xsltproc
-        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-2004)
-        sudo -E apt-get -qq autoremove --purge
-        sudo -E apt-get -qq clean
-        sudo timedatectl set-timezone "$TZ"
-        sudo mkdir -p /workdir
-        sudo chown $USER:$GROUPS /workdir
+      - name: 检查项目分支
+        uses: actions/checkout@main
 
-    - name: 清理磁盘空间(Ubuntu)
-      uses: jlumbroso/free-disk-space@main
-      with:
-        # this might remove tools that are actually needed,
-        # when set to "true" but frees about 6 GB
-        tool-cache: true
-        
-        # all of these default to true, but feel free to set to
-        # "false" if necessary for your workflow
-        android: false
-        dotnet: false
-        haskell: false
-        large-packages: false
-        swap-storage: false
-           
-    - name: 下载固件源码
-      working-directory: /workdir
-      run: |
-        df -hT $PWD
-        if [ ! -d "openwrt" ]; then
-          git clone $REPO_URL -b $REPO_BRANCH openwrt
-        else
+      - name: 缓存编译依赖
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives/*.deb
+            /workdir/openwrt
+            /workdir/openwrt/dl
+            /workdir/.ccache
+          key: ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-${{ github.sha }}-${{ hashFiles('RAX3000M-eMMC_XR30-eMMC-hanwckf/feeds.conf.default') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-
+
+      - name: 📣 Log Cache Status
+        run: |
+          if [ "${{ steps.cache.outputs.cache-hit }}" == 'true' ]; then
+            echo "✅ Cache HIT: 使用缓存成功"
+          else
+            echo "❌ Cache MISS: 首次编译或配置已变更，未命中缓存"
+          fi
+          echo "CACHE_HIT=${{ steps.cache.outputs.cache-hit }}" >> $GITHUB_ENV
+
+      - name: 初始化编译环境
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo -E apt-get -qq update
+          # sudo apt-get install -y build-essential clang flex g++ gawk \ 
+          #  gcc-multilib gettext git libncurses-dev libssl-dev python3-distutils \
+          #  rsync unzip zlib1g-dev file wget ccache libelf-dev xsltproc
+          sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-2004)
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+          sudo rm -f /var/cache/apt/archives/lock
+          sudo rm -rf /var/cache/apt/archives/partial
+          sudo timedatectl set-timezone "$TZ"
+          sudo mkdir -p /workdir
+          sudo chown $USER:$GROUPS /workdir
+          echo "export PATH=/usr/lib/ccache:\$PATH" >> $HOME/.bashrc
+          echo "export CCACHE_DIR=/workdir/.ccache" >> $HOME/.bashrc
+          source $HOME/.bashrc
+
+      - name: 清理磁盘空间(Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # when set to "true" but frees about 6 GB
+          tool-cache: true
+
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: false
+          dotnet: false
+          haskell: false
+          large-packages: false
+          swap-storage: false
+
+      - name: 下载固件源码
+        working-directory: /workdir
+        run: |
+          df -hT $PWD
+          if [ ! -d "openwrt" ]; then
+            git clone $REPO_URL -b $REPO_BRANCH openwrt
+          else
+            cd openwrt
+            git fetch origin $REPO_BRANCH
+            git reset --hard origin/$REPO_BRANCH
+          fi
+          ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+      - name: 加载feeds.conf.default & DIY_P1_SH
+        run: |
+          [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+          chmod +x $DIY_P1_SH
           cd openwrt
-          git fetch origin $REPO_BRANCH
-          git reset --hard origin/$REPO_BRANCH
-        fi
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+          $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    - name: 加载feeds.conf.default & DIY_P1_SH
-      run: |
-        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-        chmod +x $DIY_P1_SH
-        cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P1_SH
+      - name: 更新 & 安装 feeds
+        run: |
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
 
-    - name: 更新 & 安装 feeds
-      run: |
-        cd openwrt
-        ./scripts/feeds update -a
-        ./scripts/feeds install -a
+      - name: 加载config & DIY_P2_SH
+        run: |
+          [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+          chmod +x $DIY_P2_SH
+          cd openwrt
+          $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: 加载config & DIY_P2_SH
-      run: |
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x $DIY_P2_SH
-        cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P2_SH
+      - name: 设置RAX3000M-eMMC的eMMC使用highspeed
+        if: env.USE_52MHZ == 'true'
+        run: |
+          cd openwrt
+          if ! grep -q 'cap-mmc-highspeed' "${{ env.RAX3000M_EMMC_DTS_FILE }}"; then
+                  sed -i -e '/bus-width = <8>;/ a\	cap-mmc-highspeed;' "${{ env.RAX3000M_EMMC_DTS_FILE }}"
+          fi
 
-    - name: 设置RAX3000M-eMMC的eMMC使用highspeed
-      if: env.USE_52MHZ == 'true'
-      run: |
-        cd openwrt
-        if ! grep -q 'cap-mmc-highspeed' "${{ env.RAX3000M_EMMC_DTS_FILE }}"; then
-                sed -i -e '/bus-width = <8>;/ a\	cap-mmc-highspeed;' "${{ env.RAX3000M_EMMC_DTS_FILE }}"
-        fi
+      - name: 设置LAN IP地址（路由器登录地址）
+        run: |
+          cd openwrt
+          SET_IP="${{ env.LAN_IP }}" # 或者更简洁地写成 SET_IP="$LAN_IP"
+          if [[ $SET_IP =~ ^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$ ]]; then
+              #修改immortalwrt.lan关联IP
+              sed -i "s/192\.168\.[0-9]*\.[0-9]*/$SET_IP/g" $(find feeds/luci/modules/luci-mod-system -type f -name "flash.js")
+              #修改默认IP地址
+              sed -i "s/192\.168\.[0-9]*\.[0-9]*/$SET_IP/g" package/base-files/files/bin/config_generate
+            echo "设置 LAN IP 地址: $SET_IP"
+          else
+              echo "错误：LAN IP 地址 ($SET_IP) 无效。将使用默认配置。"
+          fi
 
-    - name: 设置LAN IP地址（路由器登录地址）
-      run: |
-        cd openwrt
-        SET_IP="${{ env.LAN_IP }}" # 或者更简洁地写成 SET_IP="$LAN_IP"
-        if [[ $SET_IP =~ ^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$ ]]; then
-            #修改immortalwrt.lan关联IP
-            sed -i "s/192\.168\.[0-9]*\.[0-9]*/$SET_IP/g" $(find feeds/luci/modules/luci-mod-system -type f -name "flash.js")
-            #修改默认IP地址
-            sed -i "s/192\.168\.[0-9]*\.[0-9]*/$SET_IP/g" package/base-files/files/bin/config_generate
-            echo "Set LAN IP Address: $SET_IP"
-        else
-            echo "错误：LAN IP 地址 ($SET_IP) 无效。将使用默认配置。"
-        fi
+      - name: 设置WiFi驱动版本
+        run: |
+          cd openwrt
+          wifi_driver=$(echo "${{ env.WIFI_DRIVER }}" | sed -E 's/^(v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          firmware=$(echo "${{ env.WIFI_DRIVER }}" | sed -E 's/.*fw-([0-9]{8}|default).*/\1/g')
+          if [ "$wifi_driver" == "v7.6.6.1" ]; then
+                  sed -i 's/CONFIG_MTK_MT_WIFI_DRIVER_VERSION_7672=y/CONFIG_MTK_MT_WIFI_DRIVER_VERSION_7661=y/g' .config
+          fi
+          if [ "$firmware" == "default" ]; then
+                  sed -i 's/CONFIG_MTK_MT_WIFI_MT7981_20240823=y/CONFIG_MTK_MT_WIFI_MT7981_DEFAULT_FIRMWARE=y/g' .config
+          else
+          	sed -i "s/CONFIG_MTK_MT_WIFI_MT7981_20240823=y/CONFIG_MTK_MT_WIFI_MT7981_${firmware}=y/g" .config
+          fi
+          echo "Use WiFi Driver: $wifi_driver-fw-$firmware"
 
-    - name: 设置WiFi驱动版本
-      run: |
-        cd openwrt
-        wifi_driver=$(echo "${{ env.WIFI_DRIVER }}" | sed -E 's/^(v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-        firmware=$(echo "${{ env.WIFI_DRIVER }}" | sed -E 's/.*fw-([0-9]{8}|default).*/\1/g')
-        if [ "$wifi_driver" == "v7.6.6.1" ]; then
-                sed -i 's/CONFIG_MTK_MT_WIFI_DRIVER_VERSION_7672=y/CONFIG_MTK_MT_WIFI_DRIVER_VERSION_7661=y/g' .config
-        fi
-        if [ "$firmware" == "default" ]; then
-                sed -i 's/CONFIG_MTK_MT_WIFI_MT7981_20240823=y/CONFIG_MTK_MT_WIFI_MT7981_DEFAULT_FIRMWARE=y/g' .config
-        else
-        	sed -i "s/CONFIG_MTK_MT_WIFI_MT7981_20240823=y/CONFIG_MTK_MT_WIFI_MT7981_${firmware}=y/g" .config
-        fi
-        echo "Use WiFi Driver: $wifi_driver-fw-$firmware"
+      - name: 使用nx30pro的高功率eeprom并固定WiFi MAC地址
+        if: env.EEPROM == 'true'
+        run: |
+          cd openwrt
+          wifi_driver=$(echo "${{ env.WIFI_DRIVER }}" | sed -E 's/^(v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          if [ "$wifi_driver" == "v7.6.6.1" ]; then
+                  cp $GITHUB_WORKSPACE/RAX3000M-eMMC_XR30-eMMC-hanwckf/mt79xx_20220907-8b55f5_eeprom.tar.xz dl/mt79xx_20220907-8b55f5.tar.xz
+          else
+                  cp $GITHUB_WORKSPACE/RAX3000M-eMMC_XR30-eMMC-hanwckf/mt79xx_20231229-4012a0_eeprom.tar.xz dl/mt79xx_20231229-4012a0.tar.xz
+          fi
+          ## 创建一个辅助文件。文件内容是写入MAC地址到dat文件，固定wifi MAC地址
+          echo -e "\t\tlocal wifi0_mac=\"\$(mmc_get_mac_binary factory 0x04)\"
+          \t\tsed -i \"/^MacAddress=.*/ {s/.*/MacAddress=\$wifi0_mac/;b;}; \\\$aMacAddress=\$wifi0_mac\" /etc/wireless/mediatek/mt7981.dbdc.b0.dat
+          \t\tlocal wifi1_mac=\"\$(macaddr_setbit_la \$wifi0_mac)\"
+          \t\tsed -i \"/^MacAddress=.*/ {s/.*/MacAddress=\$wifi1_mac/;b;}; \\\$aMacAddress=\$wifi1_mac\" /etc/wireless/mediatek/mt7981.dbdc.b1.dat" > temp_insert.txt
+          ## 将文本内容写入02_network
+          sed -i '/mediatek_setup_macs()/,/\};/ {/cmcc,rax3000m-emmc)/ {n;n;n;r temp_insert.txt
+          }}' target/linux/mediatek/mt7981/base-files/etc/board.d/02_network
 
-    - name: 使用nx30pro的高功率eeprom并固定WiFi MAC地址
-      if: env.EEPROM == 'true'
-      run: |
-        cd openwrt
-        wifi_driver=$(echo "${{ env.WIFI_DRIVER }}" | sed -E 's/^(v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-        if [ "$wifi_driver" == "v7.6.6.1" ]; then
-                cp $GITHUB_WORKSPACE/RAX3000M-eMMC_XR30-eMMC-hanwckf/mt79xx_20220907-8b55f5_eeprom.tar.xz dl/mt79xx_20220907-8b55f5.tar.xz
-        else
-                cp $GITHUB_WORKSPACE/RAX3000M-eMMC_XR30-eMMC-hanwckf/mt79xx_20231229-4012a0_eeprom.tar.xz dl/mt79xx_20231229-4012a0.tar.xz
-        fi
-        ## 创建一个辅助文件。文件内容是写入MAC地址到dat文件，固定wifi MAC地址
-        echo -e "\t\tlocal wifi0_mac=\"\$(mmc_get_mac_binary factory 0x04)\"
-        \t\tsed -i \"/^MacAddress=.*/ {s/.*/MacAddress=\$wifi0_mac/;b;}; \\\$aMacAddress=\$wifi0_mac\" /etc/wireless/mediatek/mt7981.dbdc.b0.dat
-        \t\tlocal wifi1_mac=\"\$(macaddr_setbit_la \$wifi0_mac)\"
-        \t\tsed -i \"/^MacAddress=.*/ {s/.*/MacAddress=\$wifi1_mac/;b;}; \\\$aMacAddress=\$wifi1_mac\" /etc/wireless/mediatek/mt7981.dbdc.b1.dat" > temp_insert.txt
-        ## 将文本内容写入02_network
-        sed -i '/mediatek_setup_macs()/,/\};/ {/cmcc,rax3000m-emmc)/ {n;n;n;r temp_insert.txt
-        }}' target/linux/mediatek/mt7981/base-files/etc/board.d/02_network
+      - name: 使用luci-app-mtk无线配置
+        if: env.APP_MTK == 'true'
+        run: |
+          cd openwrt
+          sed -i 's/CONFIG_PACKAGE_luci-app-mtwifi-cfg=y/CONFIG_PACKAGE_luci-app-mtk=y/g' .config
+          sed -i 's/CONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y/CONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y/g' .config
+          sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
+          sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
 
-    - name: 使用luci-app-mtk无线配置
-      if: env.APP_MTK == 'true'
-      run: |
-        cd openwrt
-        sed -i 's/CONFIG_PACKAGE_luci-app-mtwifi-cfg=y/CONFIG_PACKAGE_luci-app-mtk=y/g' .config
-        sed -i 's/CONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y/CONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y/g' .config
-        sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
-        sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
+      - name: 取消编译dockerman
+        if: env.NO_DOCKERMAN == 'true'
+        run: |
+          cd openwrt
+          sed -i '/CONFIG_PACKAGE_luci-app-dockerman=y/d' .config
 
-    - name: 取消编译dockerman
-      if: env.NO_DOCKERMAN == 'true'
-      run: |
-        cd openwrt
-        sed -i '/CONFIG_PACKAGE_luci-app-dockerman=y/d' .config
+      - name: SSH链接管理
+        uses: P3TERX/ssh2actions@v1.0.0
+        if: env.SSH_ACTIONS == 'true'
+        env:
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    - name: SSH链接管理
-      uses: P3TERX/ssh2actions@v1.0.0
-      if: env.SSH_ACTIONS == 'true'
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      - name: 下载安装包
+        id: package
+        run: |
+          cd openwrt
+          make defconfig
+          make download -j$(nproc)
+          find dl -size -1024c -exec ls -l {} \;
+          find dl -size -1024c -exec rm -f {} \;
 
-    - name: 下载安装包
-      id: package
-      run: |
-        cd openwrt
-        make defconfig
-        make download -j$(nproc)
-        find dl -size -1024c -exec ls -l {} \;
-        find dl -size -1024c -exec rm -f {} \;
+      - name: 🕒 Start Time
+        run: echo "BUILD_START=$(date +%s)" >> $GITHUB_ENV
 
-        
-    - name: 🕒 Start Time
-      run: echo "BUILD_START=$(date +%s)" >> $GITHUB_ENV
-       
-    - name: 编译固件
-      id: compile
-      run: |
-        cd openwrt
-        # echo -e "$(nproc) thread compile"
-        echo -e "$(( $(nproc) * 3 / 2 )) thread compile with ccache"
-        # make -j$(nproc) || make -j1 || make -j1 V=s
-        make -j$(( $(nproc) * 3 / 2 )) CCACHE=1 || make -j1 CCACHE=1 V=s
-        
-        sed -n 's/.*lan) ipad=${ipaddr:-"\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\)"} ;;.*/\1/p' package/base-files/files/bin/config_generate | head -n 1 > IP_ADDR
-        [ -s IP_ADDR ] && echo "IP_ADDR=$(cat IP_ADDR)" >> $GITHUB_ENV
-        if grep -q 'CONFIG_MTK_MT_WIFI_DRIVER_VERSION_7661=y' .config; then
-                echo "WIFI_VERSION=-v7661" >> $GITHUB_ENV
-        else
-                echo "WIFI_VERSION=-v7672" >> $GITHUB_ENV
-        fi
-        if [ "$EEPROM" == "true" ]; then
-                echo "EEPROM=-eeprom" >> $GITHUB_ENV
-        else
-                echo "EEPROM=" >> $GITHUB_ENV
-        fi
-        if [ "$USE_52MHZ" == "true" ]; then
-                echo "USE52MHZ=-use52mhz" >> $GITHUB_ENV
-        else
-                echo "USE52MHZ=" >> $GITHUB_ENV
-        fi
-        if grep -q 'CONFIG_PACKAGE_mtwifi-cfg=y' .config; then
-                echo "WIFI_INTERFACE=-mtwifi" >> $GITHUB_ENV
-        else
-                echo "WIFI_INTERFACE=" >> $GITHUB_ENV
-        fi
-        if grep -q 'CONFIG_PACKAGE_luci-app-dockerman=y' .config; then
-                echo "BUILD_DOCKERMAN=-docker" >> $GITHUB_ENV
-        else
-                echo "BUILD_DOCKERMAN=" >> $GITHUB_ENV
-        fi
-        echo "FILE_DATE=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
-        echo "status=success" >> $GITHUB_OUTPUT
+      - name: 编译固件
+        id: compile
+        run: |
+          cd openwrt
+          # echo -e "$(nproc) thread compile"
+          echo -e "$(( $(nproc) * 3 / 2 )) 线程编译，启用 ccache"
+          # make -j$(nproc) || make -j1 || make -j1 V=s
+          make -j$(( $(nproc) * 3 / 2 )) CCACHE=1 || make -j1 CCACHE=1 V=s
 
-    - name: 查看磁盘使用情况
-      if: (!cancelled())
-      run: df -hT
+          sed -n 's/.*lan) ipad=${ipaddr:-"\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\)"} ;;.*/\1/p' package/base-files/files/bin/config_generate | head -n 1 > IP_ADDR
+          [ -s IP_ADDR ] && echo "IP_ADDR=$(cat IP_ADDR)" >> $GITHUB_ENV
+          if grep -q 'CONFIG_MTK_MT_WIFI_DRIVER_VERSION_7661=y' .config; then
+                  echo "WIFI_VERSION=-v7661" >> $GITHUB_ENV
+          else
+                  echo "WIFI_VERSION=-v7672" >> $GITHUB_ENV
+          fi
+          if [ "$EEPROM" == "true" ]; then
+                  echo "EEPROM=-eeprom" >> $GITHUB_ENV
+          else
+                  echo "EEPROM=" >> $GITHUB_ENV
+          fi
+          if [ "$USE_52MHZ" == "true" ]; then
+                  echo "USE52MHZ=-use52mhz" >> $GITHUB_ENV
+          else
+                  echo "USE52MHZ=" >> $GITHUB_ENV
+          fi
+          if grep -q 'CONFIG_PACKAGE_mtwifi-cfg=y' .config; then
+                  echo "WIFI_INTERFACE=-mtwifi" >> $GITHUB_ENV
+          else
+                  echo "WIFI_INTERFACE=" >> $GITHUB_ENV
+          fi
+          if grep -q 'CONFIG_PACKAGE_luci-app-dockerman=y' .config; then
+                  echo "BUILD_DOCKERMAN=-docker" >> $GITHUB_ENV
+          else
+                  echo "BUILD_DOCKERMAN=" >> $GITHUB_ENV
+          fi
+          echo "FILE_DATE=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
+          echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: 整理文件并重命名
-      id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: | 
-        mapfile -t devices < <(grep '^CONFIG_TARGET_DEVICE.*=y' openwrt/.config | sed -r 's/.*DEVICE_(.*)=y/\1/')
-        cd openwrt/bin/targets/*/*
-        rm -rf packages
-        for val in "${devices[@]}"; do
-          for f in *"$val"*; do
-            newname="${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${val}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}${f##*$val}"
-            mv -v "$f" "$newname"
+      - name: 查看磁盘使用情况
+        if: (!cancelled())
+        run: df -hT
+
+      - name: 整理文件并重命名
+        id: organize
+        if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+        run: |
+          mapfile -t devices < <(grep '^CONFIG_TARGET_DEVICE.*=y' openwrt/.config | sed -r 's/.*DEVICE_(.*)=y/\1/')
+          cd openwrt/bin/targets/*/*
+          rm -rf packages
+          for val in "${devices[@]}"; do
+            for f in *"$val"*; do
+              newname="${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${val}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}${f##*$val}"
+              mv -v "$f" "$newname"
+            done
+            echo "$val"
           done
-          echo "$val"
-        done
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "status=success" >> $GITHUB_OUTPUT
+          echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+          echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: 📝 Generate Build Summary
-      if: steps.compile.outputs.status == 'success'
-      run: |
-        mkdir -p summary
-        BUILD_END=$(date +%s)
-        DURATION=$((BUILD_END - BUILD_START))
-        MINUTES=$((DURATION / 60))
-        SECONDS=$((DURATION % 60))
-        echo "🧱 OpenWrt 构建摘要" > summary/build-summary.md
-        echo "---------------------" >> summary/build-summary.md
-        echo "📅 构建时间: $(date '+%Y-%m-%d %H:%M:%S')" >> summary/build-summary.md
-        echo "🕒 构建总耗时: ${MINUTES} 分 ${SECONDS} 秒" >> summary/build-summary.md
-        echo "💾 缓存: $([ "$CACHE_HIT" = true ] && echo '✅ 命中' || echo '❌ 未命中')" >> summary/build-summary.md
-        echo "📁 固件输出目录: $FIRMWARE" >> summary/build-summary.md
-        echo "🌐 设备 IP 默认地址: $IP_ADDR" >> summary/build-summary.md
+      - name: 📝 Generate Build Summary
+        if: steps.compile.outputs.status == 'success'
+        run: |
+          mkdir -p summary
+          BUILD_END=$(date +%s)
+          DURATION=$((BUILD_END - BUILD_START))
+          MINUTES=$((DURATION / 60))
+          SECONDS=$((DURATION % 60))
+          {
+            echo "🧱 OpenWrt 构建摘要"
+            echo "---------------------"
+            echo "📅 构建时间: $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "🕒 构建总耗时: ${MINUTES} 分 ${SECONDS} 秒"
+            echo "💾 缓存: $([ "$CACHE_HIT" = true ] && echo '✅ 命中' || echo '❌ 未命中')"
+            echo "📁 固件输出目录: $FIRMWARE"
+            echo "🌐 设备 IP 默认地址: $IP_ADDR"
+          } | tee -a release.txt
 
-    - name: ☁️ Upload Build Summary
-      if: steps.compile.outputs.status == 'success'
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-summary
-        path: summary/build-summary.md
-               
-    - name: 打包上传固件到Actions Artifacts
-      uses: actions/upload-artifact@main
-      if: steps.organize.outputs.status == 'success' && !cancelled()
-      with:
-        name: ${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.UPLOAD_TAG_NAME }}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}
-        path: ${{ env.FIRMWARE }}
+      - name: ☁️ Upload Build Summary
+        if: steps.compile.outputs.status == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-summary
+          path: summary/build-summary.md
 
-    - name: 生成固件Release标签
-      id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      run: |
-        touch release.txt
-        echo "- 使用源码：${{ env.REPO_URL }}" >> release.txt
-        echo "- 使用分支：${{ env.REPO_BRANCH }}" >> release.txt
-        echo "- 登录地址：$IP_ADDR" >> release.txt
-        echo "- 使用WiFi驱动${{ env.WIFI_DRIVER }}" >> release.txt
-        if [[ "$EEPROM" == '-eeprom' ]]; then
-                echo "- 使用nx30pro高功率eeprom并固定WiFi MAC地址" >> release.txt
-        else
-               echo "- 未使用nx30pro高功率eeprom未固定WiFi MAC地址" >> release.txt
-        fi
-        if [[ "$USE52MHZ" == '-use52mhz' ]]; then
-                echo "- 使用52MHZ" >> release.txt
-        else
-               echo "- 未使用52MHZ,默认26MHZ" >> release.txt
-        fi
-        if [[ "$WIFI_INTERFACE" == '-mtwifi' ]]; then
-                echo "- 使用hanwckf mtwifi-cfg原生luci无线配置工具" >> release.txt
-        else
-                echo "- 使用mtk-sdk luci-app-mtk无线配置工具" >> release.txt
-        fi
-        if [[ "$BUILD_DOCKERMAN" == '-docker' ]]; then
-                echo "- 已编译luci-app-dockerman" >> release.txt
-        else
-                echo "- 未编译luci-app-dockerman" >> release.txt
-        fi
-        echo "release_tag=${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.UPLOAD_TAG_NAME }}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}" >> $GITHUB_OUTPUT
-        echo "status=success" >> $GITHUB_OUTPUT
+      - name: 打包上传固件到Actions Artifacts
+        uses: actions/upload-artifact@main
+        if: steps.organize.outputs.status == 'success' && !cancelled()
+        with:
+          name: ${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.UPLOAD_TAG_NAME }}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}
+          path: ${{ env.FIRMWARE }}
 
-    - name: 发布固件至Release
-      uses: softprops/action-gh-release@v2.1.0
-      if: steps.tag.outputs.status == 'success' && !cancelled()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        files: |
-          ${{ env.FIRMWARE }}/*
-          release.txt
-          summary/build-summary.md
-        name: ${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.UPLOAD_TAG_NAME }}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}
-        tag_name: ${{ steps.tag.outputs.release_tag }}
-        body_path: release.txt
+      - name: 生成固件Release标签
+        id: tag
+        if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+        run: |
+          touch release.txt
+          {
+            echo "- 使用源码：${{ env.REPO_URL }}"
+            echo "- 使用分支：${{ env.REPO_BRANCH }}"
+            echo "- 登录地址：$IP_ADDR"
+            echo "- 使用WiFi驱动${{ env.WIFI_DRIVER }}"
+            if [[ "$EEPROM" == '-eeprom' ]]; then
+                    echo "- 使用nx30pro高功率eeprom并固定WiFi MAC地址"
+            else
+                  echo "- 未使用nx30pro高功率eeprom未固定WiFi MAC地址"
+            fi
+            if [[ "$USE52MHZ" == '-use52mhz' ]]; then
+                    echo "- 使用52MHZ"
+            else
+                  echo "- 未使用52MHZ,默认26MHZ"
+            fi
+            if [[ "$WIFI_INTERFACE" == '-mtwifi' ]]; then
+                    echo "- 使用hanwckf mtwifi-cfg原生luci无线配置工具"
+            else
+                    echo "- 使用mtk-sdk luci-app-mtk无线配置工具"
+            fi
+            if [[ "$BUILD_DOCKERMAN" == '-docker' ]]; then
+                    echo "- 已编译luci-app-dockerman"
+            else
+                    echo "- 未编译luci-app-dockerman"
+            fi
+          } | tee -a release.txt
+          echo "release_tag=${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.UPLOAD_TAG_NAME }}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: 发布固件至Release
+        uses: softprops/action-gh-release@v2.1.0
+        if: steps.tag.outputs.status == 'success' && !cancelled()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            ${{ env.FIRMWARE }}/*
+            release.txt
+          name: ${{ env.FILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.UPLOAD_TAG_NAME }}${{ env.WIFI_VERSION }}${{ env.EEPROM }}${{ env.BUILD_DOCKERMAN }}
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          body_path: release.txt
