@@ -400,16 +400,9 @@ jobs:
             echo "📅 构建时间: $(date '+%Y-%m-%d %H:%M:%S')"
             echo "🕒 构建总耗时: ${MINUTES} 分 ${SECONDS} 秒"
             echo "💾 缓存: $([ "$CACHE_HIT" = true ] && echo '✅ 命中' || echo '❌ 未命中')"
-            echo "📁 固件输出目录: $FIRMWARE"
             echo "🌐 设备 IP 默认地址: $IP_ADDR"
           } | tee -a release.txt
-
-      - name: ☁️ Upload Build Summary
-        if: steps.compile.outputs.status == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-summary
-          path: summary/build-summary.md
+          echo "📁 固件输出目录: $FIRMWARE"
 
       - name: 打包上传固件到Actions Artifacts
         uses: actions/upload-artifact@main
