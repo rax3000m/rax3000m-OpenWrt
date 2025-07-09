@@ -61,15 +61,15 @@ cp -rf ../MyConfig/configs/istoreos/general/applications/luci-app-adguardhome/* 
 sed -i 's/拦截DNS服务器/拦截DNS服务器（默认用户名和密码均为root）/' luci-app-adguardhome/po/zh_Hans/adguardhome.po
 
 # iStore应用
-mkdir taskd
-mkdir luci-lib-taskd
-mkdir luci-lib-xterm
-mkdir luci-app-store
-mkdir quickstart
-mkdir luci-app-quickstart
-cp -rf ../kiddin9/taskd/* taskd
-cp -rf ../kiddin9/luci-lib-taskd/* luci-lib-taskd
-cp -rf ../kiddin9/luci-lib-xterm/* luci-lib-xterm
-cp -rf ../kiddin9/luci-app-store/* luci-app-store
-cp -rf ../kiddin9/quickstart/* quickstart
-cp -rf ../kiddin9/luci-app-quickstart/* luci-app-quickstart
+# mkdir taskd
+# mkdir luci-lib-taskd
+# mkdir luci-lib-xterm
+# mkdir luci-app-store
+# mkdir quickstart
+# mkdir luci-app-quickstart
+# cp -rf ../kiddin9/taskd/* taskd
+# cp -rf ../kiddin9/luci-lib-taskd/* luci-lib-taskd
+# cp -rf ../kiddin9/luci-lib-xterm/* luci-lib-xterm
+# cp -rf ../kiddin9/luci-app-store/* luci-app-store
+# cp -rf ../kiddin9/quickstart/* quickstart
+# cp -rf ../kiddin9/luci-app-quickstart/* luci-app-quickstart

@@ -145,18 +145,18 @@ jobs:
       - name: 检查项目分支
         uses: actions/checkout@main
 
-      - name: 缓存编译依赖
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            /var/cache/apt/archives/*.deb
-            /workdir/openwrt
-            /workdir/openwrt/dl
-            /workdir/.ccache
-          key: ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-${{ github.sha }}-${{ hashFiles('RAX3000M-eMMC_XR30-eMMC-hanwckf/feeds.conf.default') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-
+      # - name: 缓存编译依赖
+      #   id: cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       /var/cache/apt/archives/*.deb
+      #       /workdir/openwrt
+      #       /workdir/openwrt/dl
+      #       /workdir/.ccache
+      #     key: ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-${{ github.sha }}-${{ hashFiles('RAX3000M-eMMC_XR30-eMMC-hanwckf/feeds.conf.default') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-
 
       - name: 📣 Log Cache Status
         run: |
@@ -331,9 +331,10 @@ jobs:
         run: |
           cd openwrt
           # echo -e "$(nproc) thread compile"
-          echo -e "$(( $(nproc) * 3 / 2 )) 线程编译，启用 ccache"
+          echo -e "$(( $(nproc) * 3 / 2 )) 线程编译，b启用 ccache"
           # make -j$(nproc) || make -j1 || make -j1 V=s
-          make -j$(( $(nproc) * 3 / 2 )) CCACHE=1 || make -j1 CCACHE=1 V=s
+          # make -j$(( $(nproc) * 3 / 2 )) CCACHE=1 || make -j1 CCACHE=1 V=s
+          make -j$(( $(nproc) * 3 / 2 )) || make -j1 V=s
 
           sed -n 's/.*lan) ipad=${ipaddr:-"\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\)"} ;;.*/\1/p' package/base-files/files/bin/config_generate | head -n 1 > IP_ADDR
           [ -s IP_ADDR ] && echo "IP_ADDR=$(cat IP_ADDR)" >> $GITHUB_ENV
