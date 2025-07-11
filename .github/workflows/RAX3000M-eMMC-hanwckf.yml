@@ -65,7 +65,7 @@ on:
         type: boolean
   schedule:
     #北京时间 (UTC+8) 每周一的 00:00（午夜）
-    # - cron: '0 16 * * 0'
+    - cron: '0 16 * * 0'
 
     # - cron: '0 3 * * *'
 
