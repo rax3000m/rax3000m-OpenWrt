@@ -11,7 +11,7 @@
 name: RAX3000M-eMMC-hanwckf
 
 on:
-  push:
+  # push:
   repository_dispatch:
   workflow_dispatch:
     inputs:
@@ -65,9 +65,9 @@ on:
         type: boolean
   schedule:
     #北京时间 (UTC+8) 每周一的 00:00（午夜）
-    - cron: '0 16 * * 0'
+    # - cron: '0 16 * * 0'
 
-    - cron: '0 3 * * *'
+    # - cron: '0 3 * * *'
 
 env:
   ###############手动修改##############
@@ -158,14 +158,14 @@ jobs:
       #     restore-keys: |
       #       ${{ runner.os }}-build-${{ env.REPO_URL }}-${{ env.REPO_BRANCH }}-
 
-      - name: 📣 Log Cache Status
-        run: |
-          if [ "${{ steps.cache.outputs.cache-hit }}" == 'true' ]; then
-            echo "✅ Cache HIT: 使用缓存成功"
-          else
-            echo "❌ Cache MISS: 首次编译或配置已变更，未命中缓存"
-          fi
-          echo "CACHE_HIT=${{ steps.cache.outputs.cache-hit }}" >> $GITHUB_ENV
+      # - name: 📣 Log Cache Status
+      #   run: |
+      #     if [ "${{ steps.cache.outputs.cache-hit }}" == 'true' ]; then
+      #       echo "✅ Cache HIT: 使用缓存成功"
+      #     else
+      #       echo "❌ Cache MISS: 首次编译或配置已变更，未命中缓存"
+      #     fi
+      #     echo "CACHE_HIT=${{ steps.cache.outputs.cache-hit }}" >> $GITHUB_ENV
 
       - name: 初始化编译环境
         env:

@@ -9,6 +9,14 @@
 ### 刷砖也不怕！可以通过串口救砖：[MediaTek Filogic 系列路由器串口救砖教程](https://www.cnblogs.com/p123/p/18046679)
 
 ### 我的刷机教程：[Tutorial](https://github.com/lgs2007m/Actions-OpenWrt/tree/main/Tutorial)
+
+#### ImmortalWrt 固件下载地址 [fw.wrt.moe](https://fw.wrt.moe) ->  [ImmortalWrt 固件1](https://firmware-selector.immortalwrt.org)
+#### [https://mirrors.ustc.edu.cn/immortalwrt/](https://mirrors.ustc.edu.cn/immortalwrt/)
+#### dl.wrt.moe -> downloads.immortalwrt.org
+#### Kwrt[Kwrt](https://openwrt.ai/)
+
+#### [uboot](https://drive.wrt.moe/uboot/mediatek)
+
 ---
 
 ## RAX3000M-eMMC/XR30-eMMC workflow 手动运行可选项：
